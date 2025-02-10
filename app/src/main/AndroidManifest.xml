@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionCode="1"
+    android:versionName="1.0"
+    package="com.android.noisefield">
+    <uses-sdk
+        android:minSdkVersion="21"
+        android:targetSdkVersion="21"/>
+    <uses-feature android:name="android.software.live_wallpaper"/>
+    <application
+        android:label="@string/wallpaper_label"
+        android:icon="@drawable/icon">
+        <service
+            android:label="@string/wallpaper_label"
+            android:name="com.android.noisefield.NoiseFieldWallpaper"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:launchMode="singleInstance"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/wallpaper"/>
+        </service>
+    </application>
+</manifest>
