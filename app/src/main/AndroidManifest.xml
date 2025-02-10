@@ -3,10 +3,8 @@
     android:versionCode="1"
     android:versionName="1.0"
     package="com.android.noisefield">
-    <uses-sdk
-        android:minSdkVersion="21"
-        android:targetSdkVersion="21"/>
-    <uses-feature android:name="android.software.live_wallpaper"/>
+    <uses-feature android:name="android.software.live_wallpaper" android:required="true"/>
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <application
         android:label="@string/wallpaper_label"
         android:icon="@drawable/icon">

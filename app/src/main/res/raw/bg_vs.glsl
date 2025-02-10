@@ -1,6 +1,9 @@
-varying lowp vec4 color;
+attribute vec2 aPosition;
+attribute vec3 aColor;
+
+varying vec3 vColor;
 
 void main() {
-    color = ATTRIB_color;
-    gl_Position = vec4(ATTRIB_position.x, ATTRIB_position.y, 0.0, 1.0);
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+    vColor = aColor;
 }
