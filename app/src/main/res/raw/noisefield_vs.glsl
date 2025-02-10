@@ -1,10 +1,22 @@
-varying float pointSize;
-varying float alpha;
-void main() {
-    vec4 pos = vec4(ATTRIB_position.xyz, 1.0);
-    gl_Position = UNI_MVP * pos;
+precision highp float;
 
-    float pointSize = 1.0 + ATTRIB_speed * UNI_scaleSize * 2500.0;
-    alpha = ATTRIB_alpha;
-    gl_PointSize = pointSize;
+attribute vec3 aPosition;  // Particle position: x, y, z
+attribute float aSpeed;    // Particle speed
+attribute float aAlpha;    // Particle alpha
+
+uniform mat4 uMVPMatrix;   // Model-View-Projection matrix
+uniform float uScaleSize;  // Scale in relation to dpi
+
+varying float vAlpha;      // Pass alpha to the fragment shader
+
+void main() {
+    // Set the position using the MVP matrix
+    gl_Position = uMVPMatrix * vec4(aPosition, 1.0);
+
+    // Set the point size (particle size)
+    gl_PointSize = 1.0 + aSpeed * uScaleSize * 2500.0; // Scale size by density
+    //gl_PointSize = 50.0;
+
+    // Pass the alpha to the fragment shader
+    vAlpha = aAlpha; // Alpha decreases with lifetime
 }

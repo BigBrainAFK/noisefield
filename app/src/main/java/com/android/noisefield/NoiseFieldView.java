@@ -2,7 +2,6 @@ package com.android.noisefield;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
-import android.view.MotionEvent;
 
 public class NoiseFieldView extends GLSurfaceView {
     private final NoiseFieldRenderer renderer;
@@ -21,12 +20,5 @@ public class NoiseFieldView extends GLSurfaceView {
 
         // Continuous rendering mode
         setRenderMode(RENDERMODE_CONTINUOUSLY);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        // Pass touch events to the renderer
-        //renderer.onTouchEvent(event);
-        return true;
     }
 }

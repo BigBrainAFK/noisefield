@@ -1,8 +1,10 @@
-varying float alpha;
+precision highp float;
 
-void main()  {
-    lowp vec4 texColor;
-    texColor = texture2D(UNI_Tex0, gl_PointCoord);
-    texColor.a = texColor.a*alpha;
+varying float vAlpha;
+uniform sampler2D uTexture;
+
+void main() {
+    vec4 texColor = texture2D(uTexture, gl_PointCoord);
+    texColor.a = texColor.a * vAlpha;
     gl_FragColor = texColor;
 }
