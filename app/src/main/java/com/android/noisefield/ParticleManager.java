@@ -32,9 +32,9 @@ public class ParticleManager {
     Noise noise = new Noise();
 
     //region Particle data
-        private float[] particleData;
-        private final int particleDataSize = 9; // because we store 9 attributes
         private final int particleCount = 83;
+        private final int particleDataSize = 9; // because we store 9 attributes
+        private final float[] particleData = new float[particleCount * particleDataSize];
     //endregion
 
     //region Touch data
@@ -58,10 +58,6 @@ public class ParticleManager {
         return particleData;
     }
 
-    public int getParticleDataSize() {
-        return particleDataSize;
-    }
-
     public int getParticleCount() {
         return particleCount;
     }
@@ -73,23 +69,21 @@ public class ParticleManager {
     }
 
     private void initializeParticles() {
-        particleData = new float[particleCount * particleDataSize];
-
         for (int i = 0; i < particleCount; i++) {
             int index = i * particleDataSize;
 
-            Particle particle = new Particle(new float[]{0f,0f,0f,0f,0f,0f,0f,0f,0f});
+            Particle particle = new Particle(new float[particleDataSize]);
 
             // Initialize position
-            particle.x = noise.rsRand(-1.0f, 1.0f);
-            particle.y = noise.rsRand(-1.0f, 1.0f);
+            particle.x = noise.boundRandom(-1.0f, 1.0f);
+            particle.y = noise.boundRandom(-1.0f, 1.0f);
 
             // Initialize rest
-            particle.speed = noise.rsRand(0.0002f, 0.02f);
-            particle.wander = noise.rsRand(0.50f, 1.5f);
+            particle.speed = noise.boundRandom(0.0002f, 0.02f);
+            particle.wander = noise.boundRandom(0.50f, 1.5f);
             particle.death = 0;
-            particle.life = noise.rsRand(300, 800);
-            particle.alphaStart = noise.rsRand(0.01f, 1.0f);
+            particle.life = noise.boundRandom(300, 800);
+            particle.alphaStart = noise.boundRandom(0.01f, 1.0f);
             particle.alpha = particle.alphaStart;
 
             float[] newParticle = particle.toFloatArray();
@@ -112,31 +106,31 @@ public class ParticleManager {
             if (particle.life < 0 || particle.x < -1.2 ||
                     particle.x > 1.2 || particle.y < -1.7 ||
                     particle.y > 1.7) {
-                particle.x = noise.rsRand(-1.0f, 1.0f);
-                particle.y = noise.rsRand(-1.0f, 1.0f);
-                particle.speed = noise.rsRand(0.0002f, 0.02f);
-                particle.wander = noise.rsRand(0.50f, 1.5f);
+                particle.x = noise.boundRandom(-1.0f, 1.0f);
+                particle.y = noise.boundRandom(-1.0f, 1.0f);
+                particle.speed = noise.boundRandom(0.0002f, 0.02f);
+                particle.wander = noise.boundRandom(0.50f, 1.5f);
                 particle.death = 0;
-                particle.life = noise.rsRand(300, 800);
-                particle.alphaStart = noise.rsRand(0.01f, 1.0f);
+                particle.life = noise.boundRandom(300, 800);
+                particle.alphaStart = noise.boundRandom(0.01f, 1.0f);
                 particle.alpha = particle.alphaStart;
             }
 
             float touchDist = (float) Math.sqrt(Math.pow(touchX - particle.x, 2) +
                     Math.pow(touchY - particle.y, 2));
 
-            float noiseval = noise.noisef2(particle.x, particle.y);
+            float noiseValue = noise.getNoiseFromVec2(particle.x, particle.y);
 
             if (touchDown || touchInfluence > 0.0f) {
                 if (touchDown) {
                     touchInfluence = 1.0f;
                 }
 
-                rads = (float) Math.atan2(touchX - particle.x + noiseval,
-                        touchY - particle.y + noiseval);
+                rads = (float) Math.atan2(touchX - particle.x + noiseValue,
+                        touchY - particle.y + noiseValue);
 
                 if (touchDist > 0.0f) {
-                    speed = (0.25f + (noiseval * particle.speed + 0.01f)) / touchDist * 0.3f;
+                    speed = (0.25f + (noiseValue * particle.speed + 0.01f)) / touchDist * 0.3f;
                     speed = speed * touchInfluence;
                 } else {
                     speed = 0.3f;
@@ -146,8 +140,8 @@ public class ParticleManager {
                 particle.y += (float) Math.sin(rads) * speed * 0.2f;
             }
 
-            float angle = 360 * noiseval * particle.wander;
-            speed = noiseval * particle.speed + 0.01f;
+            float angle = 360 * noiseValue * particle.wander;
+            speed = noiseValue * particle.speed + 0.01f;
             rads = angle * (float) Math.PI / 180.0f;
 
             particle.x += (float) Math.cos(rads) * speed * 0.24f;
@@ -182,7 +176,6 @@ public class ParticleManager {
             System.arraycopy(updatedRawData, 0, particleData, index, particleDataSize);
         }
 
-        // Reduce touch influence over time
         if (touchInfluence > 0) {
             touchInfluence -= 0.01f;
         }

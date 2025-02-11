@@ -1,7 +1,5 @@
 package com.android.noisefield;
 
-import android.app.backup.BackupManager;
-
 public class BackgroundManager {
     public static final float[] vertexData = new float[]{
             //       X          Y        R          G         B
@@ -55,6 +53,4 @@ public class BackgroundManager {
             -0.45f,    -0.3f,    0.002f,    0.059f,   0.090f
     };
     public static final int vertexCount = vertexData.length / 5;
-
-    BackgroundManager(){}
 }

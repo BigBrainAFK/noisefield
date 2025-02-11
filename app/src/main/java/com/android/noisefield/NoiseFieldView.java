@@ -1,24 +1,54 @@
 package com.android.noisefield;
 
+import android.app.ActivityManager;
 import android.content.Context;
+import android.content.pm.ConfigurationInfo;
+import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
+import android.util.DisplayMetrics;
+import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.WindowManager;
 
 public class NoiseFieldView extends GLSurfaceView {
-    private final NoiseFieldRenderer renderer;
+    private NoiseFieldRenderer renderer;
 
     public NoiseFieldView(Context context) {
         super(context);
 
-        // Set OpenGL ES version
-        setEGLContextClientVersion(2);
+        final ActivityManager activityManager = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
+        final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
+        final boolean supportsEs2 = configurationInfo.reqGlEsVersion >= 0x00020000;
 
-        // Initialize the custom renderer
-        renderer = new NoiseFieldRenderer(context);
+        if (supportsEs2)
+        {
+            setEGLContextClientVersion(2);
 
-        // Set the renderer
-        setRenderer(renderer);
+            setPreserveEGLContextOnPause(true);
 
-        // Continuous rendering mode
-        setRenderMode(RENDERMODE_CONTINUOUSLY);
+            renderer = new NoiseFieldRenderer(getContext());
+            setRenderer(renderer);
+
+            DisplayMetrics metrics = new DisplayMetrics();
+            ((WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(metrics);
+            renderer.setDensityDPI(metrics.densityDpi);
+        }
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder surfaceHolder) {
+        super.surfaceCreated(surfaceHolder);
+
+        surfaceHolder.setSizeFromLayout();
+        surfaceHolder.setFormat(PixelFormat.RGB_888);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (renderer != null) {
+            renderer.onTouch(event);
+        }
+
+        return super.onTouchEvent(event);
     }
 }

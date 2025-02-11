@@ -3,16 +3,15 @@ package com.android.noisefield;
 import java.util.Random;
 
 public class Noise {
-    private Random random = new Random();
+    private final Random random = new Random();
 
     private static final int B = 0x100;
     private static final int BM = 0xff;
     private static final int N = 0x1000;
 
-    private int[] p = new int[B + B + 2];
-    private float[][] g3 = new float[B + B + 2][3];
-    private float[][] g2 = new float[B + B + 2][2];
-    private float[] g1 = new float[B + B + 2];
+    private final int[] p = new int[B + B + 2];
+    private final float[][] g3 = new float[B + B + 2][3];
+    private final float[][] g2 = new float[B + B + 2][2];
 
     Noise() {
         initNoise();
@@ -20,26 +19,27 @@ public class Noise {
 
     private void initNoise() {
         int i, j, k;
+        float[] g1 = new float[B + B + 2];
 
         for (i = 0; i < B; i++) {
             p[i] = i;
 
-            g1[i] = (float) (rsRand(B * 2) - B) / B;
+            g1[i] = (float) (boundRandom(B * 2) - B) / B;
 
             for (j = 0; j < 2; j++) {
-                g2[i][j] = (float) (rsRand(B * 2) - B) / B;
+                g2[i][j] = (float) (boundRandom(B * 2) - B) / B;
             }
-            normalizef2(g2[i]);
+            normalizeVec2(g2[i]);
 
             for (j = 0; j < 3; j++) {
-                g3[i][j] = (float) (rsRand(B * 2) - B) / B;
+                g3[i][j] = (float) (boundRandom(B * 2) - B) / B;
             }
-            normalizef3(g3[i]);
+            normalizeVec3(g3[i]);
         }
 
         for (i = B - 1; i >= 0; i--) {
             k = p[i];
-            p[i] = p[j = rsRand(B)];
+            p[i] = p[j = boundRandom(B)];
             p[j] = k;
         }
 
@@ -57,20 +57,20 @@ public class Noise {
         return t * t * (3.0f - 2.0f * t);
     }
 
-    private void normalizef2(float[] v) {
+    private void normalizeVec2(float[] v) {
         float s = (float) Math.sqrt(v[0] * v[0] + v[1] * v[1]);
         v[0] /= s;
         v[1] /= s;
     }
 
-    private void normalizef3(float[] v) {
+    private void normalizeVec3(float[] v) {
         float s = (float) Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
         v[0] /= s;
         v[1] /= s;
         v[2] /= s;
     }
 
-    public float noisef2(float x, float y) {
+    public float getNoiseFromVec2(float x, float y) {
         int bx0, bx1, by0, by1, b00, b10, b01, b11;
         float rx0, rx1, ry0, ry1, sx, sy, a, b, t, u, v;
         float[] q;
@@ -103,31 +103,31 @@ public class Noise {
         u = rx0 * q[0] + ry0 * q[1];
         q = g2[b10];
         v = rx1 * q[0] + ry0 * q[1];
-        a = lerp(u, v, sx);
+        a = linearInterpolate(u, v, sx);
 
         q = g2[b01];
         u = rx0 * q[0] + ry1 * q[1];
         q = g2[b11];
         v = rx1 * q[0] + ry1 * q[1];
-        b = lerp(u, v, sx);
+        b = linearInterpolate(u, v, sx);
 
-        return 1.5f * lerp(a, b, sy);
+        return 1.5f * linearInterpolate(a, b, sy);
     }
 
-    private float lerp(float a, float b, float f)
+    private float linearInterpolate(float a, float b, float f)
     {
         return a * (1.0f - f) + (b * f);
     }
 
-    private int rsRand(int max) {
+    private int boundRandom(int max) {
         return random.nextInt(max + 1);
     }
 
-    public float rsRand(float min, float max) {
+    public float boundRandom(float min, float max) {
         return min + random.nextFloat() * (max - min);
     }
 
-    public int rsRand(int min, int max) {
+    public int boundRandom(int min, int max) {
         return random.nextInt(max + 1 - min) + min;
     }
 }
