@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId 'com.android.noisefield'
-        minSdk 17
+        minSdk 15
         targetSdk 35
         versionCode 1
         versionName "1.0"
@@ -21,14 +21,14 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     buildFeatures {

@@ -34,6 +34,8 @@ public class NoiseFieldWallpaper extends GLWallpaperService {
 
                 setPreserveEGLContextOnPause(true);
 
+                setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+
                 renderer = new NoiseFieldRenderer(NoiseFieldWallpaper.this);
                 setRenderer(renderer);
 

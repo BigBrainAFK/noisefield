@@ -76,5 +76,10 @@ public abstract class GLWallpaperService extends WallpaperService {
         {
             glSurfaceView.setEGLContextClientVersion(version);
         }
+
+        protected void setEGLConfigChooser(int redSize, int greenSize, int blueSize, int alphaSize, int depthSize, int stencilSize)
+        {
+            glSurfaceView.setEGLConfigChooser(redSize, greenSize, blueSize, alphaSize, depthSize, stencilSize);
+        }
     }
 }
