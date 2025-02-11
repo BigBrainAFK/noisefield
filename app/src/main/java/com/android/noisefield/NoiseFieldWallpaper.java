@@ -9,15 +9,19 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.WindowManager;
 
-public class NoiseFieldWallpaper extends GLWallpaperService {
+public class NoiseFieldWallpaper extends GLWallpaperService
+{
     @Override
-    public Engine onCreateEngine() {
+    public Engine onCreateEngine()
+    {
         return new NoiseFieldEngine();
     }
 
-    private class NoiseFieldEngine extends GLWallpaperService.GLEngine {
+    private class NoiseFieldEngine extends GLWallpaperService.GLEngine
+    {
         @Override
-        public void onCreate(SurfaceHolder surfaceHolder) {
+        public void onCreate(SurfaceHolder surfaceHolder)
+        {
             super.onCreate(surfaceHolder);
 
             setTouchEventsEnabled(true);
@@ -58,10 +62,12 @@ public class NoiseFieldWallpaper extends GLWallpaperService {
         }
 
         @Override
-        public void onTouchEvent(MotionEvent event) {
+        public void onTouchEvent(MotionEvent event)
+        {
             super.onTouchEvent(event);
 
-            if (renderer != null) {
+            if (renderer != null)
+            {
                 renderer.onTouch(event);
             }
         }

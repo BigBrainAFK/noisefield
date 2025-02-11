@@ -1,7 +1,9 @@
 package com.android.noisefield;
 
-public class BackgroundManager {
-    public static final float[] vertexData = new float[]{
+public class BackgroundManager
+{
+    public static final float[] vertexData = new float[]
+    {
             //       X          Y        R          G         B
             -1.50f,     1.0f,    0.080f,    0.335f,   0.406f,
             -1.50f,    -0.2f,    0.137f,    0.176f,   0.225f,

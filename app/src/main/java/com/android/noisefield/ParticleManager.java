@@ -2,8 +2,10 @@ package com.android.noisefield;
 
 import android.view.MotionEvent;
 
-public class ParticleManager {
-    public static class Particle {
+public class ParticleManager
+{
+    public static class Particle
+    {
         float x;
         float y;
         float speed;
@@ -13,7 +15,8 @@ public class ParticleManager {
         int life;
         int death;
 
-        Particle(float[] data) {
+        Particle(float[] data)
+        {
             x = data[0];
             y = data[1];
             speed = data[3];
@@ -24,7 +27,8 @@ public class ParticleManager {
             death = Math.round(data[8]);
         }
 
-        public float[] toFloatArray() {
+        public float[] toFloatArray()
+        {
             return new float[]{x, y, 0, speed, wander, alphaStart, alpha, (float)life, (float)death};
         }
     }
@@ -50,26 +54,32 @@ public class ParticleManager {
         private boolean landscape;
     //endregion
 
-    ParticleManager() {
+    ParticleManager()
+    {
         initializeParticles();
     }
 
-    public float[] getParticleData() {
+    public float[] getParticleData()
+    {
         return particleData;
     }
 
-    public int getParticleCount() {
+    public int getParticleCount()
+    {
         return particleCount;
     }
 
-    public void setDimensions(int width, int height) {
+    public void setDimensions(int width, int height)
+    {
         this.width = width;
         this.height = height;
         landscape = width > height;
     }
 
-    private void initializeParticles() {
-        for (int i = 0; i < particleCount; i++) {
+    private void initializeParticles()
+    {
+        for (int i = 0; i < particleCount; i++)
+        {
             int index = i * particleDataSize;
 
             Particle particle = new Particle(new float[particleDataSize]);
@@ -91,10 +101,12 @@ public class ParticleManager {
         }
     }
 
-    public void updateParticles() {
+    public void updateParticles()
+    {
         float rads, speed;
 
-        for (int i = 0; i < particleCount; i++) {
+        for (int i = 0; i < particleCount; i++)
+        {
             int index = i * particleDataSize;
 
             float[] initialRawData = new float[particleDataSize];
@@ -121,18 +133,23 @@ public class ParticleManager {
 
             float noiseValue = noise.getNoiseFromVec2(particle.x, particle.y);
 
-            if (touchDown || touchInfluence > 0.0f) {
-                if (touchDown) {
+            if (touchDown || touchInfluence > 0.0f)
+            {
+                if (touchDown)
+                {
                     touchInfluence = 1.0f;
                 }
 
                 rads = (float) Math.atan2(touchX - particle.x + noiseValue,
                         touchY - particle.y + noiseValue);
 
-                if (touchDist > 0.0f) {
+                if (touchDist > 0.0f)
+                {
                     speed = (0.25f + (noiseValue * particle.speed + 0.01f)) / touchDist * 0.3f;
                     speed = speed * touchInfluence;
-                } else {
+                }
+                else
+                {
                     speed = 0.3f;
                 }
 
@@ -156,19 +173,27 @@ public class ParticleManager {
             if (dist < 0.95f) {
                 dist = 0.0f;
                 particle.alphaStart *= 1 - dist;
-            } else {
+            }
+            else
+            {
                 dist = dist - 0.95f;
-                if (particle.alphaStart < 1.0f) {
+                if (particle.alphaStart < 1.0f)
+                {
                     particle.alphaStart += 0.01f;
                     particle.alphaStart *= 1 - dist;
                 }
             }
 
-            if (particle.death < 101) {
+            if (particle.death < 101)
+            {
                 particle.alpha = (particle.alphaStart) * (particle.death) / 100.0f;
-            } else if (particle.life < 101) {
+            }
+            else if (particle.life < 101)
+            {
                 particle.alpha = particle.alpha * particle.life / 100.0f;
-            } else {
+            }
+            else
+            {
                 particle.alpha = particle.alphaStart;
             }
 
@@ -176,29 +201,38 @@ public class ParticleManager {
             System.arraycopy(updatedRawData, 0, particleData, index, particleDataSize);
         }
 
-        if (touchInfluence > 0) {
+        if (touchInfluence > 0)
+        {
             touchInfluence -= 0.01f;
         }
     }
 
-    public void onTouch(MotionEvent event) {
+    public void onTouch(MotionEvent event)
+    {
         int action = event.getActionMasked();
-        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP){
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP) {
             touchDown = false;
-        } else if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE || action == MotionEvent.ACTION_POINTER_DOWN) {
+        }
+        else if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE || action == MotionEvent.ACTION_POINTER_DOWN)
+        {
             int pointerCount = event.getPointerCount();
 
-            if (!touchDown) {
+            if (!touchDown)
+            {
                 touchDown = true;
             }
 
-            if (pointerCount > 0) {
+            if (pointerCount > 0)
+            {
                 float wRatio = 1.0f;
                 float hRatio = 1.0f;
 
-                if (!landscape) {
+                if (!landscape)
+                {
                     hRatio = (float) height / width;
-                } else {
+                }
+                else
+                {
                     wRatio = (float) width / height;
                 }
 

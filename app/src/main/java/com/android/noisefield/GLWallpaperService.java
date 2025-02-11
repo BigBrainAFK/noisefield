@@ -5,13 +5,16 @@ import android.opengl.GLSurfaceView;
 import android.service.wallpaper.WallpaperService;
 import android.view.SurfaceHolder;
 
-public abstract class GLWallpaperService extends WallpaperService {
-    public class GLEngine extends Engine{
+public abstract class GLWallpaperService extends WallpaperService
+{
+    public class GLEngine extends Engine
+    {
         private WallpaperGLSurfaceView glSurfaceView;
         private boolean rendererHasBeenSet;
         NoiseFieldRenderer renderer;
 
-        class WallpaperGLSurfaceView extends GLSurfaceView {
+        class WallpaperGLSurfaceView extends GLSurfaceView
+        {
 
             WallpaperGLSurfaceView(Context context)
             {
@@ -41,12 +44,14 @@ public abstract class GLWallpaperService extends WallpaperService {
         public void onVisibilityChanged(boolean visible)
         {
             super.onVisibilityChanged(visible);
+
             if(rendererHasBeenSet)
             {
                 if (visible)
                 {
                     glSurfaceView.onResume();
-                } else
+                }
+                else
                 {
                     glSurfaceView.onPause();
                 }

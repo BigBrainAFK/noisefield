@@ -19,11 +19,14 @@ import java.nio.FloatBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
+public class NoiseFieldRenderer implements GLSurfaceView.Renderer
+{
     //region Data
         private final Context context;
         private final ParticleManager particleManager = new ParticleManager();
         private int densityDPI;
+        private long startTime;
+        private long endTime;
     //endregion
 
     //region OpenGL ES2.0 Data
@@ -45,13 +48,15 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
         private float scaleSize;
     //endregion
 
-    public NoiseFieldRenderer(Context context) {
+    public NoiseFieldRenderer(Context context)
+    {
         this.context = context;
     }
 
     //region Surface handling
         @Override
-        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        public void onSurfaceCreated(GL10 gl, EGLConfig config)
+        {
             // Set the clear color
             GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -83,12 +88,13 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
                 GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, particleManager.getParticleData().length * 4,
                         FloatBuffer.wrap(particleManager.getParticleData()), GLES20.GL_DYNAMIC_DRAW);
 
-            } catch (Exception ignored) {
             }
+            catch (Exception ignored) {}
         }
 
         @Override
-        public void onSurfaceChanged(GL10 gl, int width, int height) {
+        public void onSurfaceChanged(GL10 gl, int width, int height)
+        {
             GLES20.glViewport(0, 0, width, height);
             setupProjectionMatrix(width, height);
             scaleSize = densityDPI / 240.0f;
@@ -97,14 +103,28 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
     //endregion
 
     //region Setters
-        public void setDensityDPI(int densityDPI) {
+        public void setDensityDPI(int densityDPI)
+        {
             this.densityDPI = densityDPI;
         }
     //endregion
 
     //region Draw handling
         @Override
-        public void onDrawFrame(GL10 gl) {
+        public void onDrawFrame(GL10 gl)
+        {
+            // Some older Android images don't limit to 60FPS themselves
+            endTime = System.currentTimeMillis();
+            long dt = endTime - startTime;
+            if (dt < 17 && dt > 0)
+            {
+                try {
+                    Thread.sleep(17 - dt);
+                }
+                catch (Exception ignored) {}
+            }
+            startTime = System.currentTimeMillis();
+
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
             try {
@@ -157,13 +177,14 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
                 GLES20.glUniform1i(2, 0);
 
                 GLES20.glDrawArrays(GLES20.GL_POINTS, 0, particleManager.getParticleCount());
-            } catch (Exception ignored) {
             }
+            catch (Exception ignored) {}
         }
     //endregion
 
     //region OpenGL helper functions
-        private int setupProgram(int vertexShaderResourceId, int fragmentShaderResourceId1) {
+        private int setupProgram(int vertexShaderResourceId, int fragmentShaderResourceId1)
+        {
             String vertexShaderSource = loadShaderSource(context.getResources(), vertexShaderResourceId);
             String fragmentShaderSource = loadShaderSource(context.getResources(), fragmentShaderResourceId1);
 
@@ -177,7 +198,8 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
 
             int[] linkStatus = new int[1];
             GLES20.glGetProgramiv(tempStore, GLES20.GL_LINK_STATUS, linkStatus, 0);
-            if (linkStatus[0] == 0) {
+            if (linkStatus[0] == 0)
+            {
                 String error = GLES20.glGetProgramInfoLog(tempStore);
                 throw new RuntimeException("Program linking failed: " + error);
             }
@@ -185,14 +207,16 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
             return tempStore;
         }
 
-        private int compileShader(int type, String source) {
+        private int compileShader(int type, String source)
+        {
             int shader = GLES20.glCreateShader(type);
             GLES20.glShaderSource(shader, source);
             GLES20.glCompileShader(shader);
 
             int[] compiled = new int[1];
             GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
-            if (compiled[0] == 0) {
+            if (compiled[0] == 0)
+            {
                 String error = GLES20.glGetShaderInfoLog(shader);
                 GLES20.glDeleteShader(shader);
                 throw new RuntimeException("Shader compilation failed: " + error);
@@ -201,35 +225,44 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
             return shader;
         }
 
-        private String loadShaderSource(Resources resources, int resourceId) {
+        private String loadShaderSource(Resources resources, int resourceId)
+        {
             InputStream inputStream = resources.openRawResource(resourceId);
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             StringBuilder shaderSource = new StringBuilder();
 
-            try {
+            try
+            {
                 String line;
-                while ((line = reader.readLine()) != null) {
+                while ((line = reader.readLine()) != null)
+                {
                     shaderSource.append(line).append("\n");
                 }
-            } catch (IOException e) {
+            }
+            catch (IOException e)
+            {
                 throw new RuntimeException("Failed to read shader source: " + e.getMessage());
-            } finally {
-                try {
+            }
+            finally
+            {
+                try
+                {
                     inputStream.close();
-                } catch (IOException e) {
-                    // Ignore
                 }
+                catch (IOException ignored) {}
             }
 
             return shaderSource.toString();
         }
 
-        private int loadTexture(int resourceId) {
+        private int loadTexture(int resourceId)
+        {
             // Generate a texture ID
             final int[] textureHandle = new int[1];
             GLES20.glGenTextures(1, textureHandle, 0);
 
-            if (textureHandle[0] != 0) {
+            if (textureHandle[0] != 0)
+            {
                 // Load the texture resource as a Bitmap
                 final BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inScaled = false; // No pre-scaling
@@ -250,19 +283,25 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
 
                 // Recycle the bitmap, as it's no longer needed
                 bitmap.recycle();
-            } else {
+            }
+            else
+            {
                 throw new RuntimeException("Error generating texture handle.");
             }
 
             return textureHandle[0];
         }
 
-        private void setupProjectionMatrix(int width, int height) {
+        private void setupProjectionMatrix(int width, int height)
+        {
             float aspectRatio = (float) width / height;
 
-            if (width > height) {
+            if (width > height)
+            {
                 Matrix.frustumM(mvpMatrix, 0, -aspectRatio, aspectRatio, -1, 1, 1, 100);
-            } else {
+            }
+            else
+            {
                 Matrix.frustumM(mvpMatrix, 0, -1, 1, -1 / aspectRatio, 1 / aspectRatio, 1, 100);
             }
 
@@ -274,7 +313,8 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
     //endregion
 
     //region Touch passthrough
-        public void onTouch(MotionEvent event) {
+        public void onTouch(MotionEvent event)
+        {
             particleManager.onTouch(event);
         }
     //endregion
