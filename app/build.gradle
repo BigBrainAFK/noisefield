@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId 'com.android.noisefield'
-        minSdk 15
+        minSdk 9
         targetSdk 35
         versionCode 1
         versionName "1.0"
@@ -37,10 +37,6 @@ android {
 
     lint {
         abortOnError false
-    }
-
-    viewBinding {
-        enabled true
     }
 }
 

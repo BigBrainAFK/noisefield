@@ -2,6 +2,7 @@ package com.android.noisefield;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.os.Build;
 import android.service.wallpaper.WallpaperService;
 import android.view.SurfaceHolder;
 
@@ -74,7 +75,9 @@ public abstract class GLWallpaperService extends WallpaperService
 
         protected void setPreserveEGLContextOnPause(boolean preserve)
         {
-            glSurfaceView.setPreserveEGLContextOnPause(preserve);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                glSurfaceView.setPreserveEGLContextOnPause(preserve);
+            }
         }
 
         protected void setEGLContextClientVersion(int version)
