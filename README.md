@@ -10,12 +10,12 @@ After a lot of bashing my head against the wall with OpenGL ES2.0 and Android Li
 
 As the original is available at the [Android git](https://android.googlesource.com/platform/packages/wallpapers/NoiseField/+/94eec8049435f00040effa703683db0610224447) I chose to make a repo and convert it so I can just hit recompile if ever needed.
 
-Right now the configuring is minimum SDK 15 with a target SDK of 35 (way more range than the original).
+Right now the configuring is minimum SDK 17 with a target SDK of 35 (way more range than the original).
 
 ## Compilation
 
 Just get the official Android Studio IDE and install the API level 35 SDK.
-You may need to install Java 147 or 21 (that's just what I chose to compile it with)
+You may need to install Java 17
 
 ## Contributing
 
