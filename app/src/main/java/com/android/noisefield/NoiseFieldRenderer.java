@@ -20,13 +20,10 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
-    //region General data
+    //region Data
         private final Context context;
-        private final Noise noise = new Noise();
+        private final ParticleManager particleManager = new ParticleManager();
         private int densityDPI;
-        private int width;
-        private int height;
-        private boolean landscape;
     //endregion
 
     //region OpenGL ES2.0 Data
@@ -48,74 +45,6 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
         private float scaleSize;
     //endregion
 
-    //region Background Vertex setup and data
-        private final float[] vertexData = new float[]{
-        //       X          Y        R          G         B
-                -1.50f,     1.0f,    0.080f,    0.335f,   0.406f,
-                -1.50f,    -0.2f,    0.137f,    0.176f,   0.225f,
-                -1.05f,     0.3f,    0.000f,    0.088f,   0.135f,
-                -1.50f,     1.0f,    0.080f,    0.335f,   0.406f,
-                -1.05f,     0.3f,    0.000f,    0.088f,   0.135f,
-                -0.60f,     0.4f,    0.000f,    0.184f,   0.233f,
-                -1.50f,     1.0f,    0.080f,    0.335f,   0.406f,
-                -0.60f,     0.4f,    0.000f,    0.184f,   0.233f,
-                +0.00f,     1.0f,    0.133f,    0.404f,   0.478f,
-                +0.00f,     1.0f,    0.133f,    0.404f,   0.478f,
-                -0.60f,     0.4f,    0.000f,    0.184f,   0.233f,
-                +0.30f,     0.4f,    0.000f,    0.124f,   0.178f,
-                +0.00f,     1.0f,    0.133f,    0.404f,   0.478f,
-                +0.30f,     0.4f,    0.000f,    0.124f,   0.178f,
-                +1.50f,     1.0f,    0.002f,    0.173f,   0.231f,
-                +1.50f,     1.0f,    0.002f,    0.173f,   0.231f,
-                +0.30f,     0.4f,    0.000f,    0.124f,   0.178f,
-                +1.50f,    -1.0f,    0.000f,    0.088f,   0.135f,
-                +0.30f,     0.4f,    0.000f,    0.124f,   0.178f,
-                -0.60f,     0.4f,    0.000f,    0.184f,   0.233f,
-                +0.00f,     0.2f,    0.000f,    0.088f,   0.135f,
-                +0.30f,     0.4f,    0.000f,    0.124f,   0.178f,
-                +0.00f,     0.2f,    0.000f,    0.088f,   0.135f,
-                +1.50f,    -1.0f,    0.000f,    0.088f,   0.135f,
-                +0.00f,     0.2f,    0.000f,    0.088f,   0.135f,
-                -0.60f,     0.4f,    0.000f,    0.184f,   0.233f,
-                -0.60f,     0.1f,    0.002f,    0.196f,   0.233f,
-                -0.60f,     0.1f,    0.002f,    0.196f,   0.233f,
-                -0.60f,     0.4f,    0.000f,    0.184f,   0.233f,
-                -1.05f,     0.3f,    0.000f,    0.088f,   0.135f,
-                -1.05f,     0.3f,    0.000f,    0.088f,   0.135f,
-                -1.50f,    -0.2f,    0.137f,    0.176f,   0.225f,
-                -0.60f,     0.1f,    0.002f,    0.196f,   0.233f,
-                -0.45f,    -0.3f,    0.002f,    0.059f,   0.090f,
-                -0.60f,     0.1f,    0.002f,    0.196f,   0.233f,
-                -1.50f,    -0.2f,    0.137f,    0.176f,   0.225f,
-                -0.45f,    -0.3f,    0.002f,    0.059f,   0.090f,
-                -1.50f,    -0.2f,    0.137f,    0.176f,   0.225f,
-                -1.50f,    -1.0f,    0.204f,    0.212f,   0.218f,
-                +1.50f,    -1.0f,    0.000f,    0.088f,   0.135f,
-                -0.45f,    -0.3f,    0.002f,    0.059f,   0.090f,
-                -1.50f,    -1.0f,    0.204f,    0.212f,   0.218f,
-                +0.00f,     0.2f,    0.000f,    0.088f,   0.135f,
-                -0.60f,     0.1f,    0.002f,    0.196f,   0.233f,
-                -0.45f,    -0.3f,    0.002f,    0.059f,   0.090f,
-                +1.50f,    -1.0f,    0.000f,    0.088f,   0.135f,
-                +0.00f,     0.2f,    0.000f,    0.088f,   0.135f,
-                -0.45f,    -0.3f,    0.002f,    0.059f,   0.090f
-        };
-        private final int vertexCount = vertexData.length / 5;
-    //endregion
-
-    //region Particle data
-        private float[] particleData;
-        private final int particleDataSize = 9; // because we store 9 attributes
-        private final int particleCount = 83;
-    //endregion
-
-    //region Touch event data
-        private boolean touchDown;
-        private float touchX;
-        private float touchY;
-        private float touchInfluence;
-    //endregion
-
     public NoiseFieldRenderer(Context context) {
         this.context = context;
     }
@@ -126,71 +55,33 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
             // Set the clear color
             GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-            // Initialize particles
-            initializeParticles();
-
             // Enable blending for transparency
             GLES20.glEnable(GLES20.GL_BLEND);
             GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE);
 
             try {
-
-                // Compile shaders and link the program
-                String vertexShaderSource = loadShaderSource(context.getResources(), R.raw.bg_vs);
-                String fragmentShaderSource = loadShaderSource(context.getResources(), R.raw.bg_fs);
-
-                int vertexShader = compileShader(GLES20.GL_VERTEX_SHADER, vertexShaderSource);
-                int fragmentShader = compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderSource);
-
-                backgroundProgramId = GLES20.glCreateProgram();
-                GLES20.glAttachShader(backgroundProgramId, vertexShader);
-                GLES20.glAttachShader(backgroundProgramId, fragmentShader);
-                GLES20.glLinkProgram(backgroundProgramId);
-
-                int[] linkStatus = new int[1];
-                GLES20.glGetProgramiv(backgroundProgramId, GLES20.GL_LINK_STATUS, linkStatus, 0);
-                if (linkStatus[0] == 0) {
-                    String error = GLES20.glGetProgramInfoLog(backgroundProgramId);
-                    throw new RuntimeException("Program linking failed: " + error);
-                }
+                backgroundProgramId = setupProgram(R.raw.bg_vs, R.raw.bg_fs);
 
                 // Create VBO and upload vertex data
-                int[] buffers = new int[1];
-                GLES20.glGenBuffers(1, buffers, 0);
+                int[] buffers = new int[2];
+                GLES20.glGenBuffers(2, buffers, 0);
                 vboId = buffers[0];
 
                 GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboId);
-                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vertexData.length * 4,
-                        FloatBuffer.wrap(vertexData), GLES20.GL_STATIC_DRAW);
+                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, BackgroundManager.vertexData.length * 4,
+                        FloatBuffer.wrap(BackgroundManager.vertexData), GLES20.GL_STATIC_DRAW);
 
-                // Compile particle shaders and initialize particle program
-                String particleVertexShaderSource = loadShaderSource(context.getResources(), R.raw.noisefield_vs);
-                String particleFragmentShaderSource = loadShaderSource(context.getResources(), R.raw.noisefield_fs);
-
-                int particleVertexShader = compileShader(GLES20.GL_VERTEX_SHADER, particleVertexShaderSource);
-                int particleFragmentShader = compileShader(GLES20.GL_FRAGMENT_SHADER, particleFragmentShaderSource);
-
-                particleProgramId = GLES20.glCreateProgram();
-                GLES20.glAttachShader(particleProgramId, particleVertexShader);
-                GLES20.glAttachShader(particleProgramId, particleFragmentShader);
-                GLES20.glLinkProgram(particleProgramId);
-
-                GLES20.glGetProgramiv(particleProgramId, GLES20.GL_LINK_STATUS, linkStatus, 0);
-                if (linkStatus[0] == 0) {
-                    String error = GLES20.glGetProgramInfoLog(particleProgramId);
-                    throw new RuntimeException("Particle program linking failed: " + error);
-                }
+                particleProgramId = setupProgram(R.raw.noisefield_vs, R.raw.noisefield_fs);
 
                 // Load particle texture
                 particleTextureId = loadTexture(R.drawable.dot);
 
                 // Create particle VBO
-                GLES20.glGenBuffers(1, buffers, 0);
-                particleVboId = buffers[0];
+                particleVboId = buffers[1];
 
                 GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, particleVboId);
-                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, particleData.length * 4,
-                        FloatBuffer.wrap(particleData), GLES20.GL_DYNAMIC_DRAW);
+                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, particleManager.getParticleData().length * 4,
+                        FloatBuffer.wrap(particleManager.getParticleData()), GLES20.GL_DYNAMIC_DRAW);
 
             } catch (Exception ignored) {
             }
@@ -201,9 +92,7 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
             GLES20.glViewport(0, 0, width, height);
             setupProjectionMatrix(width, height);
             scaleSize = densityDPI / 240.0f;
-            this.width = width;
-            this.height = height;
-            this.landscape = width > height;
+            particleManager.setDimensions(width, height);
         }
     //endregion
 
@@ -233,16 +122,16 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
                 GLES20.glVertexAttribPointer(1, 3, GLES20.GL_FLOAT, false, 20, 8);
 
                 // Draw the vertices
-                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertexCount);
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, BackgroundManager.vertexCount);
 
                 // Update and draw particles
-                updateParticles();
+                particleManager.updateParticles();
 
                 // Render particles
                 GLES20.glUseProgram(particleProgramId);
 
                 GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, particleVboId);
-                GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, particleData.length * 4, FloatBuffer.wrap(particleData));
+                GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, particleManager.getParticleData().length * 4, FloatBuffer.wrap(particleManager.getParticleData()));
 
                 // Pass float x, y and z
                 GLES20.glEnableVertexAttribArray(0);
@@ -267,14 +156,35 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, particleTextureId);
                 GLES20.glUniform1i(2, 0);
 
-
-                GLES20.glDrawArrays(GLES20.GL_POINTS, 0, particleCount);
+                GLES20.glDrawArrays(GLES20.GL_POINTS, 0, particleManager.getParticleCount());
             } catch (Exception ignored) {
             }
         }
     //endregion
 
     //region OpenGL helper functions
+        private int setupProgram(int vertexShaderResourceId, int fragmentShaderResourceId1) {
+            String vertexShaderSource = loadShaderSource(context.getResources(), vertexShaderResourceId);
+            String fragmentShaderSource = loadShaderSource(context.getResources(), fragmentShaderResourceId1);
+
+            int vertexShader = compileShader(GLES20.GL_VERTEX_SHADER, vertexShaderSource);
+            int fragmentShader = compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderSource);
+
+            int tempStore = GLES20.glCreateProgram();
+            GLES20.glAttachShader(tempStore, vertexShader);
+            GLES20.glAttachShader(tempStore, fragmentShader);
+            GLES20.glLinkProgram(tempStore);
+
+            int[] linkStatus = new int[1];
+            GLES20.glGetProgramiv(tempStore, GLES20.GL_LINK_STATUS, linkStatus, 0);
+            if (linkStatus[0] == 0) {
+                String error = GLES20.glGetProgramInfoLog(tempStore);
+                throw new RuntimeException("Program linking failed: " + error);
+            }
+
+            return tempStore;
+        }
+
         private int compileShader(int type, String source) {
             int shader = GLES20.glCreateShader(type);
             GLES20.glShaderSource(shader, source);
@@ -363,152 +273,9 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer {
         }
     //endregion
 
-    //region Particle handling
-        private void initializeParticles() {
-            particleData = new float[particleCount * particleDataSize];
-
-            for (int i = 0; i < particleCount; i++) {
-                int index = i * particleDataSize;
-
-                Particle particle = new Particle(new float[]{0f,0f,0f,0f,0f,0f,0f,0f,0f});
-
-                // Initialize position
-                particle.x = noise.rsRand(-1.0f, 1.0f);
-                particle.y = noise.rsRand(-1.0f, 1.0f);
-
-                // Initialize rest
-                particle.speed = noise.rsRand(0.0002f, 0.02f);
-                particle.wander = noise.rsRand(0.50f, 1.5f);
-                particle.death = 0;
-                particle.life = noise.rsRand(300, 800);
-                particle.alphaStart = noise.rsRand(0.01f, 1.0f);
-                particle.alpha = particle.alphaStart;
-
-                float[] newParticle = particle.toFloatArray();
-                System.arraycopy(newParticle, 0, particleData, index, particleDataSize);
-            }
-        }
-
-        private void updateParticles() {
-            float rads, speed;
-
-            for (int i = 0; i < particleCount; i++) {
-                int index = i * particleDataSize;
-
-                float[] initialRawData = new float[particleDataSize];
-
-                System.arraycopy(particleData, index, initialRawData, 0, particleDataSize);
-
-                Particle particle = new Particle(initialRawData);
-
-                if (particle.life < 0 || particle.x < -1.2 ||
-                        particle.x > 1.2 || particle.y < -1.7 ||
-                        particle.y > 1.7) {
-                    particle.x = noise.rsRand(-1.0f, 1.0f);
-                    particle.y = noise.rsRand(-1.0f, 1.0f);
-                    particle.speed = noise.rsRand(0.0002f, 0.02f);
-                    particle.wander = noise.rsRand(0.50f, 1.5f);
-                    particle.death = 0;
-                    particle.life = noise.rsRand(300, 800);
-                    particle.alphaStart = noise.rsRand(0.01f, 1.0f);
-                    particle.alpha = particle.alphaStart;
-                }
-
-                float touchDist = (float) Math.sqrt(Math.pow(touchX - particle.x, 2) +
-                                                    Math.pow(touchY - particle.y, 2));
-
-                float noiseval = noise.noisef2(particle.x, particle.y);
-
-                if (touchDown || touchInfluence > 0.0f) {
-                    if (touchDown) {
-                        touchInfluence = 1.0f;
-                    }
-
-                    rads = (float) Math.atan2(touchX - particle.x + noiseval,
-                                                    touchY - particle.y + noiseval);
-
-                    if (touchDist > 0.0f) {
-                        speed = (0.25f + (noiseval * particle.speed + 0.01f)) / touchDist * 0.3f;
-                        speed = speed * touchInfluence;
-                    } else {
-                        speed = 0.3f;
-                    }
-
-                    particle.x += (float) Math.cos(rads) * speed * 0.2f;
-                    particle.y += (float) Math.sin(rads) * speed * 0.2f;
-                }
-
-                float angle = 360 * noiseval * particle.wander;
-                speed = noiseval * particle.speed + 0.01f;
-                rads = angle * (float) Math.PI / 180.0f;
-
-                particle.x += (float) Math.cos(rads) * speed * 0.24f;
-                particle.y += (float) Math.sin(rads) * speed * 0.24f;
-
-                particle.life--;
-                particle.death++;
-
-                float dist = (float) Math.sqrt(particle.x * particle.x +
-                                               particle.y * particle.y);
-                
-                if (dist < 0.95f) {
-                    dist = 0.0f;
-                    particle.alphaStart *= 1 - dist;
-                } else {
-                    dist = dist - 0.95f;
-                    if (particle.alphaStart < 1.0f) {
-                        particle.alphaStart += 0.01f;
-                        particle.alphaStart *= 1 - dist;
-                    }
-                }
-
-                if (particle.death < 101) {
-                    particle.alpha = (particle.alphaStart) * (particle.death) / 100.0f;
-                } else if (particle.life < 101) {
-                    particle.alpha = particle.alpha * particle.life / 100.0f;
-                } else {
-                    particle.alpha = particle.alphaStart;
-                }
-
-                float[] updatedRawData = particle.toFloatArray();
-                System.arraycopy(updatedRawData, 0, particleData, index, particleDataSize);
-            }
-
-            // Reduce touch influence over time
-            if (touchInfluence > 0) {
-                touchInfluence -= 0.01f;
-            }
-    }
-    //endregion
-
-    //region Touch handling
+    //region Touch passthrough
         public void onTouch(MotionEvent event) {
-            int action = event.getActionMasked();
-            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP){
-                touchDown = false;
-            } else if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE || action == MotionEvent.ACTION_POINTER_DOWN) {
-                int pointerCount = event.getPointerCount();
-
-                if (!touchDown) {
-                    touchDown = true;
-                }
-
-                if (pointerCount > 0) {
-                    float wRatio = 1.0f;
-                    float hRatio = 1.0f;
-
-                    if (!landscape) {
-                        hRatio = (float) height / width;
-                    } else {
-                        wRatio = (float) width / height;
-                    }
-
-                    touchInfluence = 1.0f;
-
-                    touchX = event.getX(0) / width * wRatio * 2 - wRatio;
-                    touchY = -(event.getY(0) / height * hRatio * 2 - hRatio);
-                }
-            }
+            particleManager.onTouch(event);
         }
     //endregion
 }
