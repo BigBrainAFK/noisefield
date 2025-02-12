@@ -9,7 +9,6 @@ import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.WindowManager;
-import android.view.WindowMetrics;
 
 public class NoiseFieldWallpaper extends GLWallpaperService
 {
