@@ -26,7 +26,6 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
         private final ParticleManager particleManager = new ParticleManager();
         private int densityDPI;
         private long startTime;
-        private long endTime;
     //endregion
 
     //region OpenGL ES2.0 Data
@@ -114,7 +113,7 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
         public void onDrawFrame(GL10 gl)
         {
             // Some older Android images don't limit to 60FPS themselves
-            endTime = System.currentTimeMillis();
+            long endTime = System.currentTimeMillis();
             long dt = endTime - startTime;
             if (dt < 17 && dt > 0)
             {

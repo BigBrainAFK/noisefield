@@ -4,10 +4,12 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 
 public class NoiseFieldWallpaper extends GLWallpaperService
 {
@@ -43,9 +45,16 @@ public class NoiseFieldWallpaper extends GLWallpaperService
                 renderer = new NoiseFieldRenderer(NoiseFieldWallpaper.this);
                 setRenderer(renderer);
 
-                DisplayMetrics metrics = new DisplayMetrics();
-                ((WindowManager) NoiseFieldWallpaper.this.getApplication().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(metrics);
-                renderer.setDensityDPI(metrics.densityDpi);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                {
+                    renderer.setDensityDPI(getResources().getDisplayMetrics().densityDpi);
+                }
+                else
+                {
+                    DisplayMetrics metrics = new DisplayMetrics();
+                    ((WindowManager) NoiseFieldWallpaper.this.getApplication().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(metrics);
+                    renderer.setDensityDPI(metrics.densityDpi);
+                }
             }
         }
 
