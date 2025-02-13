@@ -15,7 +15,6 @@ void main() {
 
     // Set the point size (particle size)
     gl_PointSize = 1.0 + aSpeed * uScaleSize * 2500.0; // Scale size by density
-    //gl_PointSize = 50.0;
 
     // Pass the alpha to the fragment shader
     vAlpha = aAlpha; // Alpha decreases with lifetime

@@ -34,7 +34,7 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
         private int particleProgramId;
 
         // Vertex Buffer Object (VBO)
-        private int vboId;
+        private int backgroundVboId;
         private int particleVboId;
 
         // Texture id for particles
@@ -69,9 +69,9 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
                 // Create VBO and upload vertex data
                 int[] buffers = new int[2];
                 GLES20.glGenBuffers(2, buffers, 0);
-                vboId = buffers[0];
+                backgroundVboId = buffers[0];
 
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboId);
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, backgroundVboId);
                 GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, BackgroundManager.vertexData.length * 4,
                         FloatBuffer.wrap(BackgroundManager.vertexData), GLES20.GL_STATIC_DRAW);
 
@@ -127,57 +127,69 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
             try {
-                GLES20.glUseProgram(backgroundProgramId);
-
-                // Bind VBO and enable vertex attributes
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboId);
-
-                // position
-                GLES20.glEnableVertexAttribArray(0);
-                GLES20.glVertexAttribPointer(0, 2, GLES20.GL_FLOAT, false, 20, 0);
-
-                // color
-                GLES20.glEnableVertexAttribArray(1);
-                GLES20.glVertexAttribPointer(1, 3, GLES20.GL_FLOAT, false, 20, 8);
-
-                // Draw the vertices
-                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, BackgroundManager.vertexCount);
+                drawBackground();
 
                 // Update and draw particles
                 particleManager.updateParticles();
 
-                // Render particles
-                GLES20.glUseProgram(particleProgramId);
-
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, particleVboId);
-                GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, particleManager.getParticleData().length * 4, FloatBuffer.wrap(particleManager.getParticleData()));
-
-                // Pass float x, y and z
-                GLES20.glEnableVertexAttribArray(0);
-                GLES20.glVertexAttribPointer(0, 3, GLES20.GL_FLOAT, false, 36, 0);
-
-                // Pass float speed
-                GLES20.glEnableVertexAttribArray(1);
-                GLES20.glVertexAttribPointer(1, 1, GLES20.GL_FLOAT, false, 36, 12);
-
-                // Pass float alpha
-                GLES20.glEnableVertexAttribArray(2);
-                GLES20.glVertexAttribPointer(2, 1, GLES20.GL_FLOAT, false, 36, 24);
-
-                // Pass MVP matrix
-                GLES20.glUniformMatrix4fv(0, 1, false, mvpMatrix, 0);
-
-                // Pass Scale size
-                GLES20.glUniform1f(1, scaleSize);
-
-                // Bind particle texture
-                GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, particleTextureId);
-                GLES20.glUniform1i(2, 0);
-
-                GLES20.glDrawArrays(GLES20.GL_POINTS, 0, particleManager.getParticleCount());
+                drawParticles();
             }
             catch (Exception ignored) {}
+        }
+    //endregion
+
+    //region Draw handlers
+        private void drawBackground()
+        {
+            GLES20.glUseProgram(backgroundProgramId);
+
+            // Bind VBO and enable vertex attributes
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, backgroundVboId);
+
+            // position x, y
+            GLES20.glEnableVertexAttribArray(0);
+            GLES20.glVertexAttribPointer(0, 2, GLES20.GL_FLOAT, false, 20, 0);
+
+            // color r, g, b
+            GLES20.glEnableVertexAttribArray(1);
+            GLES20.glVertexAttribPointer(1, 3, GLES20.GL_FLOAT, false, 20, 8);
+
+            // Draw the vertices
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, BackgroundManager.vertexCount);
+        }
+
+        public void drawParticles()
+        {
+            // Render particles
+            GLES20.glUseProgram(particleProgramId);
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, particleVboId);
+            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, particleManager.getParticleArrayDataLength(), FloatBuffer.wrap(particleManager.getParticleData()));
+
+            // Pass float x, y and z
+            GLES20.glEnableVertexAttribArray(0);
+            GLES20.glVertexAttribPointer(0, 3, GLES20.GL_FLOAT, false, 36, 0);
+
+            // Pass float speed
+            GLES20.glEnableVertexAttribArray(1);
+            GLES20.glVertexAttribPointer(1, 1, GLES20.GL_FLOAT, false, 36, 12);
+
+            // Pass float alpha
+            GLES20.glEnableVertexAttribArray(2);
+            GLES20.glVertexAttribPointer(2, 1, GLES20.GL_FLOAT, false, 36, 24);
+
+            // Pass MVP matrix
+            GLES20.glUniformMatrix4fv(0, 1, false, mvpMatrix, 0);
+
+            // Pass Scale size
+            GLES20.glUniform1f(1, scaleSize);
+
+            // Bind particle texture
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, particleTextureId);
+            GLES20.glUniform1i(2, 0);
+
+            GLES20.glDrawArrays(GLES20.GL_POINTS, 0, particleManager.getParticleCount());
         }
     //endregion
 
@@ -293,21 +305,21 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
 
         private void setupProjectionMatrix(int width, int height)
         {
-            float aspectRatio = (float) width / height;
-
             if (width > height)
             {
-                Matrix.frustumM(mvpMatrix, 0, -aspectRatio, aspectRatio, -1, 1, 1, 100);
+                float aspectRatio = (float) width / height;
+                Matrix.frustumM(mvpMatrix, 0, -aspectRatio, aspectRatio, -1.0f, 1.0f, 1.0f, 100.0f);
             }
             else
             {
-                Matrix.frustumM(mvpMatrix, 0, -1, 1, -1 / aspectRatio, 1 / aspectRatio, 1, 100);
+                float aspectRatio = (float) height / width;
+                Matrix.frustumM(mvpMatrix, 0, -1.0f, 1.0f, -aspectRatio, aspectRatio, 1.0f, 100.0f);
             }
 
             // Apply additional transformations like the original code
-            Matrix.rotateM(mvpMatrix, 0, 180, 0, 1, 0);
-            Matrix.scaleM(mvpMatrix, 0, -1, 1, 1);
-            Matrix.translateM(mvpMatrix, 0, 0, 0, 1);
+            Matrix.rotateM(mvpMatrix, 0, 180.0f, 0.0f, 1.0f, 0.0f);
+            Matrix.scaleM(mvpMatrix, 0, -1.0f, 1.0f, 1.0f);
+            Matrix.translateM(mvpMatrix, 0, 0.0f, 0.0f, 1.0f);
         }
     //endregion
 

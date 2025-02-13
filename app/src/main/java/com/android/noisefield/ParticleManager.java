@@ -37,8 +37,10 @@ public class ParticleManager
 
     //region Particle data
         private final int particleCount = 83;
-        private final int particleDataSize = 9; // because we store 9 attributes
-        private final float[] particleData = new float[particleCount * particleDataSize];
+        private final int particlePropertyCount = 9;
+        private final int particleArrayLength = particleCount * particlePropertyCount;
+        private final int particleArrayDataLength = particleArrayLength * 4;
+        private final float[] particleData = new float[particleArrayLength];
     //endregion
 
     //region Touch data
@@ -57,6 +59,11 @@ public class ParticleManager
     ParticleManager()
     {
         initializeParticles();
+    }
+
+    public int getParticleArrayDataLength()
+    {
+        return this.particleArrayDataLength;
     }
 
     public float[] getParticleData()
@@ -80,9 +87,9 @@ public class ParticleManager
     {
         for (int i = 0; i < particleCount; i++)
         {
-            int index = i * particleDataSize;
+            int index = i * particlePropertyCount;
 
-            Particle particle = new Particle(new float[particleDataSize]);
+            Particle particle = new Particle(new float[particlePropertyCount]);
 
             // Initialize position
             particle.x = noise.boundRandom(-1.0f, 1.0f);
@@ -97,7 +104,7 @@ public class ParticleManager
             particle.alpha = particle.alphaStart;
 
             float[] newParticle = particle.toFloatArray();
-            System.arraycopy(newParticle, 0, particleData, index, particleDataSize);
+            System.arraycopy(newParticle, 0, particleData, index, particlePropertyCount);
         }
     }
 
@@ -107,11 +114,11 @@ public class ParticleManager
 
         for (int i = 0; i < particleCount; i++)
         {
-            int index = i * particleDataSize;
+            int index = i * particlePropertyCount;
 
-            float[] initialRawData = new float[particleDataSize];
+            float[] initialRawData = new float[particlePropertyCount];
 
-            System.arraycopy(particleData, index, initialRawData, 0, particleDataSize);
+            System.arraycopy(particleData, index, initialRawData, 0, particlePropertyCount);
 
             Particle particle = new Particle(initialRawData);
 
@@ -198,7 +205,7 @@ public class ParticleManager
             }
 
             float[] updatedRawData = particle.toFloatArray();
-            System.arraycopy(updatedRawData, 0, particleData, index, particleDataSize);
+            System.arraycopy(updatedRawData, 0, particleData, index, particlePropertyCount);
         }
 
         if (touchInfluence > 0)
