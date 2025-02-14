@@ -26,6 +26,7 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
         private final ParticleManager particleManager = new ParticleManager();
         private int densityDPI;
         private long startTime;
+        private int redrawTime = 16;
     //endregion
 
     //region OpenGL ES2.0 Data
@@ -63,32 +64,9 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
             GLES20.glEnable(GLES20.GL_BLEND);
             GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE);
 
-            try {
-                backgroundProgramId = setupProgram(R.raw.bg_vs, R.raw.bg_fs);
+            setupBackground();
 
-                // Create VBO and upload vertex data
-                int[] buffers = new int[2];
-                GLES20.glGenBuffers(2, buffers, 0);
-                backgroundVboId = buffers[0];
-
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, backgroundVboId);
-                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, BackgroundManager.vertexData.length * 4,
-                        FloatBuffer.wrap(BackgroundManager.vertexData), GLES20.GL_STATIC_DRAW);
-
-                particleProgramId = setupProgram(R.raw.noisefield_vs, R.raw.noisefield_fs);
-
-                // Load particle texture
-                particleTextureId = loadTexture(R.drawable.dot);
-
-                // Create particle VBO
-                particleVboId = buffers[1];
-
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, particleVboId);
-                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, particleManager.getParticleData().length * 4,
-                        FloatBuffer.wrap(particleManager.getParticleData()), GLES20.GL_DYNAMIC_DRAW);
-
-            }
-            catch (Exception ignored) {}
+            setupParticles();
         }
 
         @Override
@@ -112,15 +90,10 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
         @Override
         public void onDrawFrame(GL10 gl)
         {
-            // Some older Android images don't limit to 60FPS themselves
-            long endTime = System.currentTimeMillis();
-            long dt = endTime - startTime;
-            if (dt < 17 && dt > 0)
+            long dt = System.currentTimeMillis() - startTime;
+            if (dt < redrawTime)
             {
-                try {
-                    Thread.sleep(17 - dt);
-                }
-                catch (Exception ignored) {}
+                return;
             }
             startTime = System.currentTimeMillis();
 
@@ -139,19 +112,66 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
     //endregion
 
     //region Draw handlers
+        private void setupBackground()
+        {
+            backgroundProgramId = setupProgram(R.raw.bg_vs, R.raw.bg_fs);
+
+            // Create VBO and upload vertex data
+            int[] buffers = new int[1];
+            GLES20.glGenBuffers(1, buffers, 0);
+            backgroundVboId = buffers[0];
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, backgroundVboId);
+            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, BackgroundManager.vertexData.length * 4,
+                    FloatBuffer.wrap(BackgroundManager.vertexData), GLES20.GL_STATIC_DRAW);
+
+            // position x, y
+            GLES20.glEnableVertexAttribArray(0);
+
+            // color r, g, b
+            GLES20.glEnableVertexAttribArray(1);
+        }
+
+        private void setupParticles()
+        {
+            particleProgramId = setupProgram(R.raw.noisefield_vs, R.raw.noisefield_fs);
+
+            // Load particle texture
+            particleTextureId = loadTexture(R.drawable.dot);
+
+            // Create particle VBO
+            int[] buffers = new int[1];
+            GLES20.glGenBuffers(1, buffers, 0);
+            particleVboId = buffers[0];
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, particleVboId);
+            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, particleManager.getParticleData().length * 4,
+                    FloatBuffer.wrap(particleManager.getParticleData()), GLES20.GL_DYNAMIC_DRAW);
+
+            // Pass float x, y and z
+            GLES20.glEnableVertexAttribArray(0);
+
+            // Pass float speed
+            GLES20.glEnableVertexAttribArray(1);
+
+            // Pass float alpha
+            GLES20.glEnableVertexAttribArray(2);
+
+            // Bind particle texture
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, particleTextureId);
+        }
+
         private void drawBackground()
         {
             GLES20.glUseProgram(backgroundProgramId);
 
-            // Bind VBO and enable vertex attributes
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, backgroundVboId);
 
             // position x, y
-            GLES20.glEnableVertexAttribArray(0);
             GLES20.glVertexAttribPointer(0, 2, GLES20.GL_FLOAT, false, 20, 0);
 
             // color r, g, b
-            GLES20.glEnableVertexAttribArray(1);
             GLES20.glVertexAttribPointer(1, 3, GLES20.GL_FLOAT, false, 20, 8);
 
             // Draw the vertices
@@ -167,15 +187,12 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
             GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, particleManager.getParticleArrayDataLength(), FloatBuffer.wrap(particleManager.getParticleData()));
 
             // Pass float x, y and z
-            GLES20.glEnableVertexAttribArray(0);
             GLES20.glVertexAttribPointer(0, 3, GLES20.GL_FLOAT, false, 36, 0);
 
             // Pass float speed
-            GLES20.glEnableVertexAttribArray(1);
             GLES20.glVertexAttribPointer(1, 1, GLES20.GL_FLOAT, false, 36, 12);
 
             // Pass float alpha
-            GLES20.glEnableVertexAttribArray(2);
             GLES20.glVertexAttribPointer(2, 1, GLES20.GL_FLOAT, false, 36, 24);
 
             // Pass MVP matrix
@@ -185,8 +202,6 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
             GLES20.glUniform1f(1, scaleSize);
 
             // Bind particle texture
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, particleTextureId);
             GLES20.glUniform1i(2, 0);
 
             GLES20.glDrawArrays(GLES20.GL_POINTS, 0, particleManager.getParticleCount());
