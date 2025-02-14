@@ -8,6 +8,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.Matrix;
+import android.util.Log;
 import android.view.MotionEvent;
 
 import java.io.BufferedReader;
@@ -21,12 +22,12 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class NoiseFieldRenderer implements GLSurfaceView.Renderer
 {
+    private String TAG = "Noisefield Renderer";
+
     //region Data
         private final Context context;
         private final ParticleManager particleManager = new ParticleManager();
         private int densityDPI;
-        private long startTime;
-        private int redrawTime = 16;
     //endregion
 
     //region OpenGL ES2.0 Data
@@ -46,6 +47,20 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
 
         // Scaling factor
         private float scaleSize;
+
+
+        // Background program locations
+        private int aBackgroundPositionLocation;
+        private int aBackgroundColorLocation;
+        private int uBackgroundXOffsetLocation;
+
+        // Particle program locations
+        private int aParticlePositionLocation;
+        private int aParticleSpeedLocation;
+        private int aParticleAlphaLocation;
+        private int uParticleMVPMatrixLocation;
+        private int uParticleScaleLocation;
+        private int uParticleTextureLocaiton;
     //endregion
 
     public NoiseFieldRenderer(Context context)
@@ -90,13 +105,6 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
         @Override
         public void onDrawFrame(GL10 gl)
         {
-            long dt = System.currentTimeMillis() - startTime;
-            if (dt < redrawTime)
-            {
-                return;
-            }
-            startTime = System.currentTimeMillis();
-
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
             try {
@@ -116,6 +124,14 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
         {
             backgroundProgramId = setupProgram(R.raw.bg_vs, R.raw.bg_fs);
 
+            // Fetch shader locations as Mali/Adreno sort these differently
+            aBackgroundPositionLocation = GLES20.glGetAttribLocation(backgroundProgramId, "aPosition");
+            aBackgroundColorLocation = GLES20.glGetAttribLocation(backgroundProgramId, "aColor");
+            uBackgroundXOffsetLocation = GLES20.glGetAttribLocation(backgroundProgramId, "uXOffset");
+
+            Log.d(TAG, "background position location: " + aBackgroundPositionLocation);
+            Log.d(TAG, "background color location: " + aBackgroundColorLocation);
+
             // Create VBO and upload vertex data
             int[] buffers = new int[1];
             GLES20.glGenBuffers(1, buffers, 0);
@@ -126,10 +142,10 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
                     FloatBuffer.wrap(BackgroundManager.vertexData), GLES20.GL_STATIC_DRAW);
 
             // position x, y
-            GLES20.glEnableVertexAttribArray(0);
+            GLES20.glEnableVertexAttribArray(aBackgroundPositionLocation);
 
             // color r, g, b
-            GLES20.glEnableVertexAttribArray(1);
+            GLES20.glEnableVertexAttribArray(aBackgroundColorLocation);
         }
 
         private void setupParticles()
@@ -138,6 +154,21 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
 
             // Load particle texture
             particleTextureId = loadTexture(R.drawable.dot);
+
+            // Fetch shader locations as Mali/Adreno sort these differently
+            aParticlePositionLocation = GLES20.glGetAttribLocation(particleProgramId, "aPosition");
+            aParticleSpeedLocation = GLES20.glGetAttribLocation(particleProgramId, "aSpeed");
+            aParticleAlphaLocation = GLES20.glGetAttribLocation(particleProgramId, "aAlpha");
+            uParticleMVPMatrixLocation = GLES20.glGetUniformLocation(particleProgramId, "uMVPMatrix");
+            uParticleScaleLocation = GLES20.glGetUniformLocation(particleProgramId, "uScaleSize");
+            uParticleTextureLocaiton = GLES20.glGetUniformLocation(particleProgramId, "uTexture");
+
+            Log.d(TAG, "particle position location: " + aParticlePositionLocation);
+            Log.d(TAG, "particle speed location: " + aParticleSpeedLocation);
+            Log.d(TAG, "particle alpha location: " + aParticleAlphaLocation);
+            Log.d(TAG, "particle matrix location: " + uParticleMVPMatrixLocation);
+            Log.d(TAG, "particle scale location: " + uParticleScaleLocation);
+            Log.d(TAG, "particle texture location: " + uParticleTextureLocaiton);
 
             // Create particle VBO
             int[] buffers = new int[1];
@@ -169,10 +200,10 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, backgroundVboId);
 
             // position x, y
-            GLES20.glVertexAttribPointer(0, 2, GLES20.GL_FLOAT, false, 20, 0);
+            GLES20.glVertexAttribPointer(aBackgroundPositionLocation, 2, GLES20.GL_FLOAT, false, 20, 0);
 
             // color r, g, b
-            GLES20.glVertexAttribPointer(1, 3, GLES20.GL_FLOAT, false, 20, 8);
+            GLES20.glVertexAttribPointer(aBackgroundColorLocation, 3, GLES20.GL_FLOAT, false, 20, 8);
 
             // Draw the vertices
             GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, BackgroundManager.vertexCount);
@@ -187,22 +218,22 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
             GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, particleManager.getParticleArrayDataLength(), FloatBuffer.wrap(particleManager.getParticleData()));
 
             // Pass float x, y and z
-            GLES20.glVertexAttribPointer(0, 3, GLES20.GL_FLOAT, false, 36, 0);
+            GLES20.glVertexAttribPointer(aParticlePositionLocation, 3, GLES20.GL_FLOAT, false, 36, 0);
 
             // Pass float speed
-            GLES20.glVertexAttribPointer(1, 1, GLES20.GL_FLOAT, false, 36, 12);
+            GLES20.glVertexAttribPointer(aParticleSpeedLocation, 1, GLES20.GL_FLOAT, false, 36, 12);
 
             // Pass float alpha
-            GLES20.glVertexAttribPointer(2, 1, GLES20.GL_FLOAT, false, 36, 24);
+            GLES20.glVertexAttribPointer(aParticleAlphaLocation, 1, GLES20.GL_FLOAT, false, 36, 24);
 
             // Pass MVP matrix
-            GLES20.glUniformMatrix4fv(0, 1, false, mvpMatrix, 0);
+            GLES20.glUniformMatrix4fv(uParticleMVPMatrixLocation, 1, false, mvpMatrix, 0);
 
             // Pass Scale size
-            GLES20.glUniform1f(1, scaleSize);
+            GLES20.glUniform1f(uParticleScaleLocation, scaleSize);
 
             // Bind particle texture
-            GLES20.glUniform1i(2, 0);
+            GLES20.glUniform1i(uParticleTextureLocaiton, 0);
 
             GLES20.glDrawArrays(GLES20.GL_POINTS, 0, particleManager.getParticleCount());
         }
