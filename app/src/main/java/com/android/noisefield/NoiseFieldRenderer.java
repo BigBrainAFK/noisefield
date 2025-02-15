@@ -107,15 +107,12 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
         {
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-            try {
-                drawBackground();
+            drawBackground();
 
-                // Update and draw particles
-                particleManager.updateParticles();
+            // Update and draw particles
+            particleManager.updateParticles();
 
-                drawParticles();
-            }
-            catch (Exception ignored) {}
+            drawParticles();
         }
     //endregion
 
