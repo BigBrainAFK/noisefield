@@ -23,13 +23,13 @@ public class ParticleManager
             wander = data[4];
             alphaStart = data[5];
             alpha = data[6];
-            life = Math.round(data[7]);
-            death = Math.round(data[8]);
+            life = data[7];
+            death = data[8];
         }
 
         public float[] toFloatArray()
         {
-            return new float[]{x, y, 0, speed, wander, alphaStart, alpha, (float)life, (float)death};
+            return new float[]{x, y, 0, speed, wander, alphaStart, alpha, life, death};
         }
     }
 
@@ -44,10 +44,10 @@ public class ParticleManager
     //endregion
 
     //region Touch data
-        private boolean touchDown;
-        private float touchX;
-        private float touchY;
-        private float touchInfluence;
+        private boolean touchDown = false;
+        private float touchX = 0.0f;
+        private float touchY = 0.0f;
+        private float touchInfluence = 0.0f;
     //endregion
 
     //region Dimensional data
@@ -111,7 +111,7 @@ public class ParticleManager
     public void updateParticles(long deltaTime)
     {
         float rads, speed;
-        float deltaTimeFactor = deltaTime / 33.0f; // This adjusts it to the designed 33fps
+        float deltaTimeFactor = deltaTime / 33.0f; // This adjusts it to the designed ~30FPS
 
         for (int i = 0; i < particleCount; i++)
         {
@@ -123,9 +123,9 @@ public class ParticleManager
 
             Particle particle = new Particle(initialRawData);
 
-            if (particle.life < 0 || particle.x < -1.2 ||
-                    particle.x > 1.2 || particle.y < -1.7 ||
-                    particle.y > 1.7) {
+            if (particle.life < 0.0f || particle.x < -1.2f ||
+                    particle.x > 1.2f || particle.y < -1.7f ||
+                    particle.y > 1.7f) {
                 particle.x = noise.boundRandom(-1.0f, 1.0f);
                 particle.y = noise.boundRandom(-1.0f, 1.0f);
                 particle.speed = noise.boundRandom(0.0002f, 0.02f);
@@ -139,7 +139,7 @@ public class ParticleManager
             float touchDist = (float) Math.sqrt(Math.pow(touchX - particle.x, 2) +
                     Math.pow(touchY - particle.y, 2));
 
-            float noiseValue = noise.getNoiseFromVec2(particle.x, particle.y);
+            float noiseValue = noise.getNoiseFloat2(particle.x, particle.y);
 
             if (touchDown || touchInfluence > 0.0f)
             {
@@ -167,10 +167,9 @@ public class ParticleManager
                 particle.y += (float) Math.sin(rads) * speed * 0.2f;
             }
 
-            float angle = 360 * noiseValue * particle.wander;
             speed = noiseValue * particle.speed + 0.01f;
             speed *= deltaTimeFactor;
-            rads = angle * (float) Math.PI / 180.0f;
+            rads = (360 * noiseValue * particle.wander) * (float) Math.PI / 180.0f;
 
             particle.x += (float) Math.cos(rads) * speed * 0.24f;
             particle.y += (float) Math.sin(rads) * speed * 0.24f;
@@ -178,26 +177,19 @@ public class ParticleManager
             particle.life -= deltaTimeFactor;
             particle.death += deltaTimeFactor;
 
-            float dist = (float) Math.sqrt(particle.x * particle.x +
-                    particle.y * particle.y);
+            float dist = (float) Math.sqrt(Math.pow(particle.x, 2) + Math.pow(particle.y, 2));
 
-            if (dist < 0.95f) {
-                dist = 0.0f;
-                particle.alphaStart *= 1 - dist;
-            }
-            else
-            {
-                dist = dist - 0.95f;
+            if (dist >= 0.95f) {
                 if (particle.alphaStart < 1.0f)
                 {
-                    particle.alphaStart += 0.01f;
-                    particle.alphaStart *= 1 - dist;
+                    particle.alphaStart += 0.01f * deltaTimeFactor;
+                    particle.alphaStart *= 1 - (dist - 0.95f);
                 }
             }
 
             if (particle.death < 101.0f)
             {
-                particle.alpha = (particle.alphaStart) * (particle.death) / 100.0f;
+                particle.alpha = particle.alphaStart * particle.death / 100.0f;
             }
             else if (particle.life < 101.0f)
             {

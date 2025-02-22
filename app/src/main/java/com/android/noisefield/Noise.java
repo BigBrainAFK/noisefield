@@ -84,7 +84,7 @@ public class Noise
         v[2] /= s;
     }
 
-    public float getNoiseFromVec2(float x, float y)
+    public float getNoiseFloat2(float x, float y)
     {
         int bx0, bx1, by0, by1, b00, b10, b01, b11;
         float rx0, rx1, ry0, ry1, sx, sy, a, b, t, u, v;
@@ -118,20 +118,20 @@ public class Noise
         u = rx0 * q[0] + ry0 * q[1];
         q = g2[b10];
         v = rx1 * q[0] + ry0 * q[1];
-        a = linearInterpolate(u, v, sx);
+        a = mix(u, v, sx);
 
         q = g2[b01];
         u = rx0 * q[0] + ry1 * q[1];
         q = g2[b11];
         v = rx1 * q[0] + ry1 * q[1];
-        b = linearInterpolate(u, v, sx);
+        b = mix(u, v, sx);
 
-        return 1.5f * linearInterpolate(a, b, sy);
+        return 1.5f * mix(a, b, sy);
     }
 
-    private float linearInterpolate(float a, float b, float f)
+    private float mix(float start, float stop, float fraction)
     {
-        return a * (1.0f - f) + (b * f);
+        return start + ((stop - start) * fraction);
     }
 
     private int boundRandom(int max)

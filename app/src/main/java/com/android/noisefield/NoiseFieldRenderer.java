@@ -440,11 +440,23 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
             if (width > height)
             {
                 float aspectRatio = (float) width / height;
+
+                if (aspectRatio > 1.7f)
+                {
+                    aspectRatio = 1.7f;
+                }
+
                 Matrix.frustumM(mvpMatrix, 0, -aspectRatio, aspectRatio, -1.0f, 1.0f, 1.0f, 100.0f);
             }
             else
             {
                 float aspectRatio = (float) height / width;
+
+                if (aspectRatio > 1.7f)
+                {
+                    aspectRatio = 1.7f;
+                }
+
                 Matrix.frustumM(mvpMatrix, 0, -1.0f, 1.0f, -aspectRatio, aspectRatio, 1.0f, 100.0f);
             }
 
