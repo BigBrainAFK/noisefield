@@ -12,8 +12,8 @@ public class ParticleManager
         float wander;
         float alphaStart;
         float alpha;
-        int life;
-        int death;
+        float life;
+        float death;
 
         Particle(float[] data)
         {
@@ -39,7 +39,7 @@ public class ParticleManager
         private final int particleCount = 83;
         private final int particlePropertyCount = 9;
         private final int particleArrayLength = particleCount * particlePropertyCount;
-        private final int particleArrayDataLength = particleArrayLength * 4;
+        private final int particleArrayDataSize = particleArrayLength * 4;
         private final float[] particleData = new float[particleArrayLength];
     //endregion
 
@@ -61,9 +61,9 @@ public class ParticleManager
         initializeParticles();
     }
 
-    public int getParticleArrayDataLength()
+    public int getParticleArrayDataSize()
     {
-        return this.particleArrayDataLength;
+        return this.particleArrayDataSize;
     }
 
     public float[] getParticleData()
@@ -108,9 +108,10 @@ public class ParticleManager
         }
     }
 
-    public void updateParticles()
+    public void updateParticles(long deltaTime)
     {
         float rads, speed;
+        float deltaTimeFactor = deltaTime / 33.0f; // This adjusts it to the designed 33fps
 
         for (int i = 0; i < particleCount; i++)
         {
@@ -153,12 +154,14 @@ public class ParticleManager
                 if (touchDist > 0.0f)
                 {
                     speed = (0.25f + (noiseValue * particle.speed + 0.01f)) / touchDist * 0.3f;
-                    speed = speed * touchInfluence;
+                    speed *= touchInfluence;
                 }
                 else
                 {
                     speed = 0.3f;
                 }
+
+                speed *= deltaTimeFactor;
 
                 particle.x += (float) Math.cos(rads) * speed * 0.2f;
                 particle.y += (float) Math.sin(rads) * speed * 0.2f;
@@ -166,13 +169,14 @@ public class ParticleManager
 
             float angle = 360 * noiseValue * particle.wander;
             speed = noiseValue * particle.speed + 0.01f;
+            speed *= deltaTimeFactor;
             rads = angle * (float) Math.PI / 180.0f;
 
             particle.x += (float) Math.cos(rads) * speed * 0.24f;
             particle.y += (float) Math.sin(rads) * speed * 0.24f;
 
-            particle.life--;
-            particle.death++;
+            particle.life -= deltaTimeFactor;
+            particle.death += deltaTimeFactor;
 
             float dist = (float) Math.sqrt(particle.x * particle.x +
                     particle.y * particle.y);
@@ -191,11 +195,11 @@ public class ParticleManager
                 }
             }
 
-            if (particle.death < 101)
+            if (particle.death < 101.0f)
             {
                 particle.alpha = (particle.alphaStart) * (particle.death) / 100.0f;
             }
-            else if (particle.life < 101)
+            else if (particle.life < 101.0f)
             {
                 particle.alpha = particle.alpha * particle.life / 100.0f;
             }
@@ -210,7 +214,7 @@ public class ParticleManager
 
         if (touchInfluence > 0)
         {
-            touchInfluence -= 0.01f;
+            touchInfluence -= 0.01f * deltaTimeFactor;
         }
     }
 

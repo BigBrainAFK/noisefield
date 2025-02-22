@@ -55,4 +55,5 @@ public class BackgroundManager
             -0.450f,    -0.300f,     0.002f,     0.059f,     0.090f
     };
     public static final int vertexCount = vertexData.length / 5;
+    public static final int vertexDataSize = vertexData.length * 4;
 }

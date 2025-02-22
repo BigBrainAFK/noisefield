@@ -8,6 +8,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.Matrix;
+import android.os.Build;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -15,6 +17,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -28,6 +32,7 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
         private final Context context;
         private final ParticleManager particleManager = new ParticleManager();
         private int densityDPI;
+        private long startTime = SystemClock.uptimeMillis();
     //endregion
 
     //region OpenGL ES2.0 Data
@@ -47,6 +52,8 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
 
         // Scaling factor
         private float scaleSize;
+        // XOffset
+        private float xOffset = 0.0f;
 
 
         // Background program locations
@@ -99,18 +106,28 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
         {
             this.densityDPI = densityDPI;
         }
+
+        public void setOffset(float xOffset, float yOffset, int xPixels, int yPixels)
+        {
+            this.xOffset = xOffset;
+        }
     //endregion
 
     //region Draw handling
         @Override
         public void onDrawFrame(GL10 gl)
         {
+            long endTime = SystemClock.uptimeMillis();
+            long deltaTime = endTime - startTime;
+            startTime = SystemClock.uptimeMillis();
+
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+
 
             drawBackground();
 
             // Update and draw particles
-            particleManager.updateParticles();
+            particleManager.updateParticles(deltaTime);
 
             drawParticles();
         }
@@ -124,19 +141,23 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
             // Fetch shader locations as Mali/Adreno sort these differently
             aBackgroundPositionLocation = GLES20.glGetAttribLocation(backgroundProgramId, "aPosition");
             aBackgroundColorLocation = GLES20.glGetAttribLocation(backgroundProgramId, "aColor");
-            uBackgroundXOffsetLocation = GLES20.glGetAttribLocation(backgroundProgramId, "uXOffset");
+            uBackgroundXOffsetLocation = GLES20.glGetUniformLocation(backgroundProgramId, "uXOffset");
 
             Log.d(TAG, "background position location: " + aBackgroundPositionLocation);
             Log.d(TAG, "background color location: " + aBackgroundColorLocation);
+            Log.d(TAG, "background offset location: " + uBackgroundXOffsetLocation);
 
             // Create VBO and upload vertex data
             int[] buffers = new int[1];
             GLES20.glGenBuffers(1, buffers, 0);
             backgroundVboId = buffers[0];
 
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, backgroundVboId);
-            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, BackgroundManager.vertexData.length * 4,
-                    FloatBuffer.wrap(BackgroundManager.vertexData), GLES20.GL_STATIC_DRAW);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD)
+            {
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, backgroundVboId);
+                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, BackgroundManager.vertexDataSize,
+                        FloatBuffer.wrap(BackgroundManager.vertexData), GLES20.GL_STATIC_DRAW);
+            }
 
             // position x, y
             GLES20.glEnableVertexAttribArray(aBackgroundPositionLocation);
@@ -172,18 +193,21 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
             GLES20.glGenBuffers(1, buffers, 0);
             particleVboId = buffers[0];
 
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, particleVboId);
-            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, particleManager.getParticleData().length * 4,
-                    FloatBuffer.wrap(particleManager.getParticleData()), GLES20.GL_DYNAMIC_DRAW);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD)
+            {
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, particleVboId);
+                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, particleManager.getParticleArrayDataSize(),
+                        FloatBuffer.wrap(particleManager.getParticleData()), GLES20.GL_DYNAMIC_DRAW);
+            }
 
             // Pass float x, y and z
-            GLES20.glEnableVertexAttribArray(0);
+            GLES20.glEnableVertexAttribArray(aParticlePositionLocation);
 
             // Pass float speed
-            GLES20.glEnableVertexAttribArray(1);
+            GLES20.glEnableVertexAttribArray(aParticleSpeedLocation);
 
             // Pass float alpha
-            GLES20.glEnableVertexAttribArray(2);
+            GLES20.glEnableVertexAttribArray(aParticleAlphaLocation);
 
             // Bind particle texture
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -194,13 +218,46 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
         {
             GLES20.glUseProgram(backgroundProgramId);
 
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, backgroundVboId);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD)
+            {
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, backgroundVboId);
 
-            // position x, y
-            GLES20.glVertexAttribPointer(aBackgroundPositionLocation, 2, GLES20.GL_FLOAT, false, 20, 0);
+                int[] bufferSize = new int[1];
+                GLES20.glGetBufferParameteriv(GLES20.GL_ARRAY_BUFFER, GLES20.GL_BUFFER_SIZE, bufferSize, 0);
 
-            // color r, g, b
-            GLES20.glVertexAttribPointer(aBackgroundColorLocation, 3, GLES20.GL_FLOAT, false, 20, 8);
+                if (bufferSize[0] == 0) {
+                    ByteBuffer nativeByteBuffer = ByteBuffer.allocateDirect(BackgroundManager.vertexDataSize);
+                    nativeByteBuffer.order(ByteOrder.nativeOrder());
+
+                    FloatBuffer backgroundVertexDataBuffer = nativeByteBuffer.asFloatBuffer();
+                    backgroundVertexDataBuffer.put(BackgroundManager.vertexData).position(0);
+
+                    GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, BackgroundManager.vertexDataSize,
+                            backgroundVertexDataBuffer, GLES20.GL_STATIC_DRAW);
+                }
+
+                // position x, y
+                GLES20.glVertexAttribPointer(aBackgroundPositionLocation, 2, GLES20.GL_FLOAT, false, 20, 0);
+
+                // color r, g, b
+                GLES20.glVertexAttribPointer(aBackgroundColorLocation, 3, GLES20.GL_FLOAT, false, 20, 8);
+            }
+            else
+            {
+                ByteBuffer nativeByteBuffer = ByteBuffer.allocateDirect(BackgroundManager.vertexDataSize);
+                nativeByteBuffer.order(ByteOrder.nativeOrder());
+
+                FloatBuffer backgroundVertexDataBuffer = nativeByteBuffer.asFloatBuffer();
+                backgroundVertexDataBuffer.put(BackgroundManager.vertexData).position(0);
+
+                // position x, y
+                GLES20.glVertexAttribPointer(aBackgroundPositionLocation, 2, GLES20.GL_FLOAT, false, 20, backgroundVertexDataBuffer);
+
+                // color r, g, b
+                GLES20.glVertexAttribPointer(aBackgroundColorLocation, 3, GLES20.GL_FLOAT, false, 20, backgroundVertexDataBuffer.position(2));
+            }
+
+            GLES20.glUniform1f(uBackgroundXOffsetLocation, xOffset);
 
             // Draw the vertices
             GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, BackgroundManager.vertexCount);
@@ -211,17 +268,49 @@ public class NoiseFieldRenderer implements GLSurfaceView.Renderer
             // Render particles
             GLES20.glUseProgram(particleProgramId);
 
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, particleVboId);
-            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, particleManager.getParticleArrayDataLength(), FloatBuffer.wrap(particleManager.getParticleData()));
+            ByteBuffer nativeByteBuffer = ByteBuffer.allocateDirect(particleManager.getParticleArrayDataSize());
+            nativeByteBuffer.order(ByteOrder.nativeOrder());
 
-            // Pass float x, y and z
-            GLES20.glVertexAttribPointer(aParticlePositionLocation, 3, GLES20.GL_FLOAT, false, 36, 0);
+            FloatBuffer particleVertexDataBuffer = nativeByteBuffer.asFloatBuffer();
+            particleVertexDataBuffer.put(particleManager.getParticleData()).position(0);
 
-            // Pass float speed
-            GLES20.glVertexAttribPointer(aParticleSpeedLocation, 1, GLES20.GL_FLOAT, false, 36, 12);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD)
+            {
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, particleVboId);
 
-            // Pass float alpha
-            GLES20.glVertexAttribPointer(aParticleAlphaLocation, 1, GLES20.GL_FLOAT, false, 36, 24);
+                int[] bufferSize = new int[1];
+                GLES20.glGetBufferParameteriv(GLES20.GL_ARRAY_BUFFER, GLES20.GL_BUFFER_SIZE, bufferSize, 0);
+
+                if (bufferSize[0] == 0 || bufferSize[0] < particleManager.getParticleArrayDataSize())
+                {
+                    GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, particleManager.getParticleArrayDataSize(),
+                            particleVertexDataBuffer, GLES20.GL_STATIC_DRAW);
+                }
+                else
+                {
+                    GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, particleManager.getParticleArrayDataSize(), particleVertexDataBuffer);
+                }
+
+                // Pass float x, y and z
+                GLES20.glVertexAttribPointer(aParticlePositionLocation, 3, GLES20.GL_FLOAT, false, 36, 0);
+
+                // Pass float speed
+                GLES20.glVertexAttribPointer(aParticleSpeedLocation, 1, GLES20.GL_FLOAT, false, 36, 12);
+
+                // Pass float alpha
+                GLES20.glVertexAttribPointer(aParticleAlphaLocation, 1, GLES20.GL_FLOAT, false, 36, 24);
+            }
+            else
+            {
+                // Pass float x, y and z
+                GLES20.glVertexAttribPointer(aParticlePositionLocation, 3, GLES20.GL_FLOAT, false, 36, particleVertexDataBuffer);
+
+                // Pass float speed
+                GLES20.glVertexAttribPointer(aParticleSpeedLocation, 1, GLES20.GL_FLOAT, false, 36, particleVertexDataBuffer.position(3));
+
+                // Pass float alpha
+                GLES20.glVertexAttribPointer(aParticleAlphaLocation, 1, GLES20.GL_FLOAT, false, 36, particleVertexDataBuffer.position(6));
+            }
 
             // Pass MVP matrix
             GLES20.glUniformMatrix4fv(uParticleMVPMatrixLocation, 1, false, mvpMatrix, 0);

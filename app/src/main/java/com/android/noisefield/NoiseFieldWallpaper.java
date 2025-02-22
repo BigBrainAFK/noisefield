@@ -70,6 +70,13 @@ public class NoiseFieldWallpaper extends GLWallpaperService
         }
 
         @Override
+        public void onOffsetsChanged(float xOffset, float yOffset, float xOffsetStep,
+                                     float yOffsetStep, int xPixelOffset, int yPixelOffset)
+        {
+            renderer.setOffset(xOffset, yOffset, xPixelOffset, yPixelOffset);
+        }
+
+        @Override
         public void onTouchEvent(MotionEvent event)
         {
             super.onTouchEvent(event);
